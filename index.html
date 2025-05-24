@@ -243,6 +243,50 @@
             opacity: 0.5;
         }
         
+        /* Bouton œil pour voir le mot de passe */
+        .password-input-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #8e8e93;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        /* Section paramètres */
+        .settings-section {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e5ea;
+            margin-top: 20px;
+        }
+        
+        .settings-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1c1c1e;
+        }
+        
+        .backup-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .backup-buttons .btn {
+            flex: 1;
+            min-width: 140px;
+        }
+        
         /* Modal d'édition */
         .modal {
             display: none;
@@ -332,7 +376,10 @@
         <div class="icon">🔐</div>
         <h1>Coffre-fort</h1>
         <form class="lock-form" onsubmit="unlock(event)">
-            <input type="password" id="masterPassword" placeholder="Mot de passe maître" autocomplete="off" required>
+            <div class="password-input-container">
+                <input type="password" id="masterPassword" placeholder="Mot de passe maître" autocomplete="off" required>
+                <button type="button" class="toggle-password" onclick="toggleMasterPassword()">👁</button>
+            </div>
             <button type="submit" class="btn btn-primary">Déverrouiller</button>
         </form>
     </div>
@@ -367,6 +414,19 @@
                 <p>Aucun mot de passe enregistré</p>
                 <p style="font-size: 14px; margin-top: 10px;">Commencez par en ajouter un</p>
             </div>
+        </div>
+        
+        <!-- Section Paramètres/Sauvegarde -->
+        <div class="settings-section">
+            <h2>💾 Sauvegarde & Restauration</h2>
+            <div class="backup-buttons">
+                <button class="btn btn-secondary" onclick="exportData()">📤 Exporter</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Importer</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            </div>
+            <p style="font-size: 12px; color: #8e8e93; margin-top: 10px;">
+                Les sauvegardes sont chiffrées avec votre mot de passe maître
+            </p>
         </div>
     </div>
     
@@ -598,6 +658,85 @@
                 displayPasswords();
                 showToast('Mot de passe supprimé');
             }
+        }
+        
+        // Afficher/masquer le mot de passe maître
+        function toggleMasterPassword() {
+            const passwordInput = document.getElementById('masterPassword');
+            const toggleBtn = passwordInput.nextElementSibling;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '👁‍🗨';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁';
+            }
+        }
+        
+        // Exporter les données
+        function exportData() {
+            if (passwords.length === 0) {
+                showToast('Aucune donnée à exporter');
+                return;
+            }
+            
+            // Créer un objet avec les données chiffrées et la date
+            const exportObject = {
+                version: '1.0',
+                date: new Date().toISOString(),
+                encryptedData: localStorage.getItem('encryptedPasswords')
+            };
+            
+            // Créer un blob et télécharger
+            const dataStr = JSON.stringify(exportObject, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            // Créer un lien de téléchargement
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `coffre-fort-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showToast('Données exportées avec succès');
+        }
+        
+        // Importer les données
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importObject = JSON.parse(e.target.result);
+                    
+                    // Vérifier la structure
+                    if (!importObject.encryptedData) {
+                        throw new Error('Format de fichier invalide');
+                    }
+                    
+                    // Tenter de déchiffrer avec le mot de passe actuel
+                    const decryptedData = decrypt(importObject.encryptedData, masterKey);
+                    if (!decryptedData) {
+                        throw new Error('Impossible de déchiffrer - vérifiez le mot de passe maître');
+                    }
+                    
+                    // Si succès, remplacer les données
+                    passwords = JSON.parse(decryptedData);
+                    localStorage.setItem('encryptedPasswords', importObject.encryptedData);
+                    displayPasswords();
+                    showToast(`${passwords.length} mots de passe importés`);
+                    
+                } catch (error) {
+                    showToast('Erreur : ' + error.message);
+                }
+                
+                // Réinitialiser l'input file
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file);
         }
         
         // Focus automatique sur le champ mot de passe maître au chargement
