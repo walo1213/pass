@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Coffre-fort</title>
+    
+    <!-- Crypto-JS pour le chiffrement AES -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f2f2f7;
+            color: #1c1c1e;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+        
+        /* Écran de verrouillage */
+        #lockScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        #lockScreen h1 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        #lockScreen .icon {
+            font-size: 60px;
+            margin-bottom: 30px;
+        }
+        
+        .lock-form {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        /* En-tête */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        /* Barre de recherche */
+        .search-container {
+            padding: 15px;
+            background: white;
+            position: sticky;
+            top: 64px;
+            z-index: 99;
+            border-bottom: 1px solid #e5e5ea;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            background: #f2f2f7;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            background: #e5e5ea;
+        }
+        
+        /* Formulaires et inputs */
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            background: #f2f2f7;
+            -webkit-appearance: none;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+        
+        /* Boutons */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: #f2f2f7;
+            color: #1c1c1e;
+            margin-bottom: 10px;
+        }
+        
+        .btn-danger {
+            background: #ff3b30;
+            color: white;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+            margin: 0 5px;
+        }
+        
+        /* Section d'ajout */
+        .add-section {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e5e5ea;
+        }
+        
+        .add-form {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .add-form.active {
+            display: block;
+        }
+        
+        /* Liste des mots de passe */
+        .passwords-list {
+            padding: 10px 0;
+            min-height: 200px;
+        }
+        
+        .password-item {
+            background: white;
+            margin: 10px 15px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .password-item:active {
+            transform: scale(0.98);
+        }
+        
+        .password-item h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #1c1c1e;
+        }
+        
+        .password-item .info {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-bottom: 5px;
+        }
+        
+        .password-item .password-value {
+            font-family: monospace;
+            background: #f2f2f7;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            word-break: break-all;
+            font-size: 14px;
+        }
+        
+        .password-item .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Message vide */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8e8e93;
+        }
+        
+        .empty-state .icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Modal d'édition */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1001;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .password-item {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1c1c1e;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1002;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 375px) {
+            header h1 {
+                font-size: 20px;
+            }
+            
+            .password-item h3 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Écran de verrouillage -->
+    <div id="lockScreen">
+        <div class="icon">🔐</div>
+        <h1>Coffre-fort</h1>
+        <form class="lock-form" onsubmit="unlock(event)">
+            <input type="password" id="masterPassword" placeholder="Mot de passe maître" autocomplete="off" required>
+            <button type="submit" class="btn btn-primary">Déverrouiller</button>
+        </form>
+    </div>
+    
+    <!-- Application principale -->
+    <div class="container" id="mainApp" style="display: none;">
+        <header>
+            <h1>Mes Mots de Passe</h1>
+        </header>
+        
+        <!-- Barre de recherche -->
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." oninput="searchPasswords()">
+        </div>
+        
+        <!-- Section d'ajout -->
+        <div class="add-section">
+            <button class="btn btn-primary" onclick="toggleAddForm()">➕ Ajouter un mot de passe</button>
+            <form class="add-form" id="addForm" onsubmit="addPassword(event)">
+                <input type="text" id="siteName" placeholder="Nom du site/service" required>
+                <input type="text" id="username" placeholder="Identifiant" required>
+                <input type="password" id="password" placeholder="Mot de passe" required>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" onclick="toggleAddForm()">Annuler</button>
+            </form>
+        </div>
+        
+        <!-- Liste des mots de passe -->
+        <div class="passwords-list" id="passwordsList">
+            <div class="empty-state">
+                <div class="icon">🔒</div>
+                <p>Aucun mot de passe enregistré</p>
+                <p style="font-size: 14px; margin-top: 10px;">Commencez par en ajouter un</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal d'édition -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">Modifier le mot de passe</div>
+            <form onsubmit="saveEdit(event)">
+                <input type="hidden" id="editId">
+                <input type="text" id="editSiteName" placeholder="Nom du site/service" required>
+                <input type="text" id="editUsername" placeholder="Identifiant" required>
+                <input type="password" id="editPassword" placeholder="Mot de passe" required>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Annuler</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Toast pour les notifications -->
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        // Variables globales
+        let masterKey = null;
+        let passwords = [];
+        
+        // Fonctions de chiffrement
+        function encrypt(text, key) {
+            return CryptoJS.AES.encrypt(text, key).toString();
+        }
+        
+        function decrypt(ciphertext, key) {
+            const bytes = CryptoJS.AES.decrypt(ciphertext, key);
+            return bytes.toString(CryptoJS.enc.Utf8);
+        }
+        
+        // Fonction pour afficher les notifications
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Déverrouillage de l'application
+        function unlock(event) {
+            event.preventDefault();
+            const passwordInput = document.getElementById('masterPassword');
+            masterKey = passwordInput.value;
+            
+            // Essayer de déchiffrer les données existantes
+            try {
+                const encryptedData = localStorage.getItem('encryptedPasswords');
+                if (encryptedData) {
+                    const decryptedData = decrypt(encryptedData, masterKey);
+                    if (decryptedData) {
+                        passwords = JSON.parse(decryptedData);
+                        document.getElementById('lockScreen').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'block';
+                        displayPasswords();
+                        showToast('Application déverrouillée');
+                    } else {
+                        throw new Error('Mot de passe incorrect');
+                    }
+                } else {
+                    // Première utilisation
+                    document.getElementById('lockScreen').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    showToast('Bienvenue ! Commencez par ajouter un mot de passe');
+                }
+            } catch (error) {
+                passwordInput.value = '';
+                passwordInput.style.borderColor = '#ff3b30';
+                showToast('Mot de passe incorrect');
+                setTimeout(() => {
+                    passwordInput.style.borderColor = '#e5e5ea';
+                }, 2000);
+            }
+        }
+        
+        // Sauvegarder les données chiffrées
+        function saveData() {
+            const encryptedData = encrypt(JSON.stringify(passwords), masterKey);
+            localStorage.setItem('encryptedPasswords', encryptedData);
+        }
+        
+        // Afficher/masquer le formulaire d'ajout
+        function toggleAddForm() {
+            const form = document.getElementById('addForm');
+            form.classList.toggle('active');
+            if (form.classList.contains('active')) {
+                document.getElementById('siteName').focus();
+            } else {
+                // Réinitialiser le formulaire
+                document.getElementById('siteName').value = '';
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            }
+        }
+        
+        // Ajouter un mot de passe
+        function addPassword(event) {
+            event.preventDefault();
+            
+            const siteName = document.getElementById('siteName').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const newPassword = {
+                id: Date.now(),
+                siteName: siteName,
+                username: username,
+                password: password,
+                createdAt: new Date().toLocaleDateString('fr-FR')
+            };
+            
+            passwords.push(newPassword);
+            saveData();
+            displayPasswords();
+            toggleAddForm();
+            showToast('Mot de passe ajouté');
+        }
+        
+        // Afficher les mots de passe
+        function displayPasswords(filteredPasswords = null) {
+            const list = document.getElementById('passwordsList');
+            const passwordsToShow = filteredPasswords || passwords;
+            
+            if (passwordsToShow.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔒</div>
+                        <p>${filteredPasswords ? 'Aucun résultat trouvé' : 'Aucun mot de passe enregistré'}</p>
+                        <p style="font-size: 14px; margin-top: 10px;">${filteredPasswords ? 'Essayez avec d\'autres termes' : 'Commencez par en ajouter un'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = passwordsToShow.map(pwd => `
+                <div class="password-item">
+                    <h3>${pwd.siteName}</h3>
+                    <div class="info">Identifiant : ${pwd.username}</div>
+                    <div class="info">Ajouté le : ${pwd.createdAt}</div>
+                    <div class="password-value" id="pwd-${pwd.id}" onclick="togglePassword(${pwd.id})">
+                        ••••••••
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-secondary btn-small" onclick="editPassword(${pwd.id})">Modifier</button>
+                        <button class="btn btn-danger btn-small" onclick="deletePassword(${pwd.id})">Supprimer</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Afficher/masquer le mot de passe
+        function togglePassword(id) {
+            const element = document.getElementById(`pwd-${id}`);
+            const pwd = passwords.find(p => p.id === id);
+            
+            if (element.textContent === '••••••••') {
+                element.textContent = pwd.password;
+                setTimeout(() => {
+                    element.textContent = '••••••••';
+                }, 10000); // Masquer après 10 secondes
+            } else {
+                element.textContent = '••••••••';
+            }
+        }
+        
+        // Rechercher des mots de passe
+        function searchPasswords() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayPasswords();
+                return;
+            }
+            
+            const filtered = passwords.filter(pwd => 
+                pwd.siteName.toLowerCase().includes(searchTerm) ||
+                pwd.username.toLowerCase().includes(searchTerm)
+            );
+            
+            displayPasswords(filtered);
+        }
+        
+        // Éditer un mot de passe
+        function editPassword(id) {
+            const pwd = passwords.find(p => p.id === id);
+            
+            document.getElementById('editId').value = id;
+            document.getElementById('editSiteName').value = pwd.siteName;
+            document.getElementById('editUsername').value = pwd.username;
+            document.getElementById('editPassword').value = pwd.password;
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+        
+        // Fermer le modal d'édition
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+        
+        // Sauvegarder les modifications
+        function saveEdit(event) {
+            event.preventDefault();
+            
+            const id = parseInt(document.getElementById('editId').value);
+            const pwd = passwords.find(p => p.id === id);
+            
+            pwd.siteName = document.getElementById('editSiteName').value;
+            pwd.username = document.getElementById('editUsername').value;
+            pwd.password = document.getElementById('editPassword').value;
+            
+            saveData();
+            displayPasswords();
+            closeEditModal();
+            showToast('Mot de passe modifié');
+        }
+        
+        // Supprimer un mot de passe
+        function deletePassword(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce mot de passe ?')) {
+                passwords = passwords.filter(p => p.id !== id);
+                saveData();
+                displayPasswords();
+                showToast('Mot de passe supprimé');
+            }
+        }
+        
+        // Focus automatique sur le champ mot de passe maître au chargement
+        window.onload = function() {
+            document.getElementById('masterPassword').focus();
+        };
+        
+        // Fermer le modal si on clique en dehors
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>
