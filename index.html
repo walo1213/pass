@@ -368,6 +368,65 @@
             opacity: 1;
         }
         
+        /* Section aide */
+        .help-section {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e5ea;
+            margin-top: 20px;
+        }
+        
+        .help-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1c1c1e;
+        }
+        
+        .help-content {
+            display: none;
+        }
+        
+        .help-content.active {
+            display: block;
+        }
+        
+        .help-content h3 {
+            font-size: 16px;
+            color: #667eea;
+            margin: 20px 0 10px 0;
+        }
+        
+        .help-content p, .help-content li {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #3a3a3c;
+            margin-bottom: 10px;
+        }
+        
+        .help-content ul {
+            padding-left: 20px;
+        }
+        
+        .developer-signature {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid #e5e5ea;
+            background: linear-gradient(135deg, #f8f6ff 0%, #fff 100%);
+        }
+        
+        .developer-signature p {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .developer-signature .version {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 5px;
+        }
+        
         /* Responsive */
         @media (max-width: 375px) {
             header h1 {
@@ -438,6 +497,59 @@
             <p style="font-size: 12px; color: #8e8e93; margin-top: 10px;">
                 Les sauvegardes sont chiffrées avec votre mot de passe maître
             </p>
+        </div>
+        
+        <!-- Section Aide -->
+        <div class="help-section">
+            <h2>❓ Aide</h2>
+            <button class="btn btn-secondary" onclick="toggleHelp()">Afficher l'aide</button>
+            
+            <div class="help-content" id="helpContent">
+                <h3>🚀 Démarrage rapide</h3>
+                <ul>
+                    <li><strong>Mot de passe maître :</strong> Choisissez un mot de passe fort que vous n'oublierez pas. Il sert à chiffrer toutes vos données.</li>
+                    <li><strong>Ajouter :</strong> Cliquez sur "➕ Ajouter un mot de passe" et remplissez les champs.</li>
+                    <li><strong>Voir :</strong> Touchez le mot de passe masqué pour le révéler temporairement (10 secondes).</li>
+                    <li><strong>Rechercher :</strong> Utilisez la barre de recherche pour filtrer par nom, identifiant ou notes.</li>
+                </ul>
+                
+                <h3>🔐 Sécurité</h3>
+                <ul>
+                    <li>Toutes vos données sont chiffrées avec AES-256</li>
+                    <li>Le mot de passe maître n'est jamais stocké</li>
+                    <li>Les données restent 100% locales sur votre appareil</li>
+                    <li>Aucune connexion internet requise</li>
+                </ul>
+                
+                <h3>💾 Sauvegarde</h3>
+                <ul>
+                    <li><strong>Exporter :</strong> Crée un fichier JSON chiffré avec vos données</li>
+                    <li><strong>Importer :</strong> Restaure vos données depuis une sauvegarde</li>
+                    <li>Les sauvegardes restent chiffrées et sécurisées</li>
+                    <li>Conservez vos sauvegardes dans iCloud, Dropbox, etc.</li>
+                </ul>
+                
+                <h3>📱 Installation sur iPhone</h3>
+                <ol>
+                    <li>Ouvrez ce fichier dans Safari</li>
+                    <li>Tapez sur le bouton de partage (carré avec flèche)</li>
+                    <li>Choisissez "Sur l'écran d'accueil"</li>
+                    <li>L'app apparaîtra comme une vraie application</li>
+                </ol>
+                
+                <h3>⚠️ Important</h3>
+                <ul>
+                    <li>N'oubliez JAMAIS votre mot de passe maître</li>
+                    <li>Faites des sauvegardes régulières</li>
+                    <li>Si vous supprimez les données Safari, tout sera perdu</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Signature du développeur -->
+        <div class="developer-signature">
+            <p>💻 Développement : Wadi LOTFI</p>
+            <p class="version">Version 1.0 - Coffre-fort Local</p>
         </div>
     </div>
     
@@ -756,6 +868,22 @@
             };
             
             reader.readAsText(file);
+        }
+        
+        // Afficher/masquer l'aide
+        function toggleHelp() {
+            const helpContent = document.getElementById('helpContent');
+            const btn = helpContent.previousElementSibling;
+            
+            if (helpContent.classList.contains('active')) {
+                helpContent.classList.remove('active');
+                btn.textContent = 'Afficher l\'aide';
+            } else {
+                helpContent.classList.add('active');
+                btn.textContent = 'Masquer l\'aide';
+                // Faire défiler jusqu'à l'aide
+                helpContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
         
         // Focus automatique sur le champ mot de passe maître au chargement
