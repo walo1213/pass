@@ -224,6 +224,16 @@
             font-size: 14px;
         }
         
+        .password-item .notes {
+            font-size: 14px;
+            color: #667eea;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f8f6ff;
+            border-radius: 8px;
+            font-style: italic;
+        }
+        
         .password-item .actions {
             display: flex;
             gap: 10px;
@@ -402,6 +412,7 @@
                 <input type="text" id="siteName" placeholder="Nom du site/service" required>
                 <input type="text" id="username" placeholder="Identifiant" required>
                 <input type="password" id="password" placeholder="Mot de passe" required>
+                <input type="text" id="notes" placeholder="Notes (optionnel)">
                 <button type="submit" class="btn btn-primary">Enregistrer</button>
                 <button type="button" class="btn btn-secondary" onclick="toggleAddForm()">Annuler</button>
             </form>
@@ -439,6 +450,7 @@
                 <input type="text" id="editSiteName" placeholder="Nom du site/service" required>
                 <input type="text" id="editUsername" placeholder="Identifiant" required>
                 <input type="password" id="editPassword" placeholder="Mot de passe" required>
+                <input type="text" id="editNotes" placeholder="Notes (optionnel)">
                 <button type="submit" class="btn btn-primary">Enregistrer</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Annuler</button>
             </form>
@@ -526,6 +538,7 @@
                 document.getElementById('siteName').value = '';
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
+                document.getElementById('notes').value = '';
             }
         }
         
@@ -536,12 +549,14 @@
             const siteName = document.getElementById('siteName').value;
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const notes = document.getElementById('notes').value;
             
             const newPassword = {
                 id: Date.now(),
                 siteName: siteName,
                 username: username,
                 password: password,
+                notes: notes,
                 createdAt: new Date().toLocaleDateString('fr-FR')
             };
             
@@ -576,6 +591,7 @@
                     <div class="password-value" id="pwd-${pwd.id}" onclick="togglePassword(${pwd.id})">
                         ••••••••
                     </div>
+                    ${pwd.notes ? `<div class="notes">📝 ${pwd.notes}</div>` : ''}
                     <div class="actions">
                         <button class="btn btn-secondary btn-small" onclick="editPassword(${pwd.id})">Modifier</button>
                         <button class="btn btn-danger btn-small" onclick="deletePassword(${pwd.id})">Supprimer</button>
@@ -610,7 +626,8 @@
             
             const filtered = passwords.filter(pwd => 
                 pwd.siteName.toLowerCase().includes(searchTerm) ||
-                pwd.username.toLowerCase().includes(searchTerm)
+                pwd.username.toLowerCase().includes(searchTerm) ||
+                (pwd.notes && pwd.notes.toLowerCase().includes(searchTerm))
             );
             
             displayPasswords(filtered);
@@ -624,6 +641,7 @@
             document.getElementById('editSiteName').value = pwd.siteName;
             document.getElementById('editUsername').value = pwd.username;
             document.getElementById('editPassword').value = pwd.password;
+            document.getElementById('editNotes').value = pwd.notes || '';
             
             document.getElementById('editModal').classList.add('active');
         }
@@ -643,6 +661,7 @@
             pwd.siteName = document.getElementById('editSiteName').value;
             pwd.username = document.getElementById('editUsername').value;
             pwd.password = document.getElementById('editPassword').value;
+            pwd.notes = document.getElementById('editNotes').value;
             
             saveData();
             displayPasswords();
