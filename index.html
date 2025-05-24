@@ -259,6 +259,11 @@
             margin-bottom: 15px;
         }
         
+        .password-input-container input {
+            margin-bottom: 0;
+            padding-right: 45px;
+        }
+        
         .toggle-password {
             position: absolute;
             right: 15px;
@@ -561,7 +566,10 @@
                 <input type="hidden" id="editId">
                 <input type="text" id="editSiteName" placeholder="Nom du site/service" required>
                 <input type="text" id="editUsername" placeholder="Identifiant" required>
-                <input type="password" id="editPassword" placeholder="Mot de passe" required>
+                <div class="password-input-container">
+                    <input type="password" id="editPassword" placeholder="Mot de passe" required>
+                    <button type="button" class="toggle-password" onclick="toggleEditPassword()">👁</button>
+                </div>
                 <input type="text" id="editNotes" placeholder="Notes (optionnel)">
                 <button type="submit" class="btn btn-primary">Enregistrer</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Annuler</button>
@@ -794,6 +802,20 @@
         // Afficher/masquer le mot de passe maître
         function toggleMasterPassword() {
             const passwordInput = document.getElementById('masterPassword');
+            const toggleBtn = passwordInput.nextElementSibling;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '👁‍🗨';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁';
+            }
+        }
+        
+        // Afficher/masquer le mot de passe en édition
+        function toggleEditPassword() {
+            const passwordInput = document.getElementById('editPassword');
             const toggleBtn = passwordInput.nextElementSibling;
             
             if (passwordInput.type === 'password') {
