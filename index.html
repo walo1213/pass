@@ -291,6 +291,42 @@
             color: #1c1c1e;
         }
         
+        .settings-content {
+            display: none;
+        }
+        
+        .settings-content.active {
+            display: block;
+        }
+        
+        .settings-group {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f8fa;
+            border-radius: 12px;
+        }
+        
+        .settings-group h3 {
+            font-size: 16px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .settings-group p {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 10px;
+        }
+        
+        .change-password-form {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .change-password-form.active {
+            display: block;
+        }
+        
         .backup-buttons {
             display: flex;
             gap: 10px;
@@ -491,17 +527,47 @@
             </div>
         </div>
         
-        <!-- Section Paramètres/Sauvegarde -->
+        <!-- Section Paramètres -->
         <div class="settings-section">
-            <h2>💾 Sauvegarde & Restauration</h2>
-            <div class="backup-buttons">
-                <button class="btn btn-secondary" onclick="exportData()">📤 Exporter</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Importer</button>
-                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            <h2>⚙️ Paramètres</h2>
+            <button class="btn btn-secondary" onclick="toggleSettings()">Ouvrir les paramètres</button>
+            
+            <div class="settings-content" id="settingsContent">
+                <!-- Changement de mot de passe maître -->
+                <div class="settings-group">
+                    <h3>🔐 Mot de passe maître</h3>
+                    <button class="btn btn-secondary" onclick="toggleChangePassword()">Changer le mot de passe</button>
+                    
+                    <form class="change-password-form" id="changePasswordForm" onsubmit="changePassword(event)">
+                        <div class="password-input-container">
+                            <input type="password" id="currentPassword" placeholder="Mot de passe actuel" required>
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">👁</button>
+                        </div>
+                        <div class="password-input-container">
+                            <input type="password" id="newPassword" placeholder="Nouveau mot de passe" required>
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">👁</button>
+                        </div>
+                        <div class="password-input-container">
+                            <input type="password" id="confirmPassword" placeholder="Confirmer le nouveau mot de passe" required>
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">👁</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Valider le changement</button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleChangePassword()">Annuler</button>
+                    </form>
+                    <p>Attention : N'oubliez pas votre nouveau mot de passe !</p>
+                </div>
+                
+                <!-- Sauvegarde et restauration -->
+                <div class="settings-group">
+                    <h3>💾 Sauvegarde & Restauration</h3>
+                    <div class="backup-buttons">
+                        <button class="btn btn-secondary" onclick="exportData()">📤 Exporter</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Importer</button>
+                        <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+                    </div>
+                    <p>Les sauvegardes sont chiffrées avec votre mot de passe maître</p>
+                </div>
             </div>
-            <p style="font-size: 12px; color: #8e8e93; margin-top: 10px;">
-                Les sauvegardes sont chiffrées avec votre mot de passe maître
-            </p>
         </div>
         
         <!-- Section Aide -->
@@ -764,6 +830,12 @@
             document.getElementById('editNotes').value = pwd.notes || '';
             
             document.getElementById('editModal').classList.add('active');
+            
+            // Réinitialiser le bouton œil
+            const passwordInput = document.getElementById('editPassword');
+            const toggleBtn = passwordInput.nextElementSibling;
+            passwordInput.type = 'password';
+            toggleBtn.textContent = '👁';
         }
         
         // Fermer le modal d'édition
@@ -890,6 +962,92 @@
             };
             
             reader.readAsText(file);
+        }
+        
+        // Afficher/masquer les paramètres
+        function toggleSettings() {
+            const settingsContent = document.getElementById('settingsContent');
+            const btn = settingsContent.previousElementSibling;
+            
+            if (settingsContent.classList.contains('active')) {
+                settingsContent.classList.remove('active');
+                btn.textContent = 'Ouvrir les paramètres';
+            } else {
+                settingsContent.classList.add('active');
+                btn.textContent = 'Fermer les paramètres';
+                settingsContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+        
+        // Afficher/masquer le formulaire de changement de mot de passe
+        function toggleChangePassword() {
+            const form = document.getElementById('changePasswordForm');
+            form.classList.toggle('active');
+            if (form.classList.contains('active')) {
+                document.getElementById('currentPassword').focus();
+            } else {
+                // Réinitialiser le formulaire
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            }
+        }
+        
+        // Fonction générique pour afficher/masquer un mot de passe
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleBtn = passwordInput.nextElementSibling;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '👁‍🗨';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁';
+            }
+        }
+        
+        // Changer le mot de passe maître
+        function changePassword(event) {
+            event.preventDefault();
+            
+            const currentPwd = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            
+            // Vérifier que le mot de passe actuel est correct
+            if (currentPwd !== masterKey) {
+                showToast('Mot de passe actuel incorrect');
+                return;
+            }
+            
+            // Vérifier que les nouveaux mots de passe correspondent
+            if (newPwd !== confirmPwd) {
+                showToast('Les nouveaux mots de passe ne correspondent pas');
+                return;
+            }
+            
+            // Vérifier la force du nouveau mot de passe
+            if (newPwd.length < 6) {
+                showToast('Le nouveau mot de passe doit contenir au moins 6 caractères');
+                return;
+            }
+            
+            // Rechiffrer toutes les données avec le nouveau mot de passe
+            try {
+                // Déchiffrer avec l'ancien mot de passe
+                const decryptedData = JSON.stringify(passwords);
+                
+                // Chiffrer avec le nouveau mot de passe
+                masterKey = newPwd;
+                const encryptedData = encrypt(decryptedData, masterKey);
+                localStorage.setItem('encryptedPasswords', encryptedData);
+                
+                toggleChangePassword();
+                showToast('Mot de passe maître changé avec succès');
+            } catch (error) {
+                showToast('Erreur lors du changement de mot de passe');
+            }
         }
         
         // Afficher/masquer l'aide
